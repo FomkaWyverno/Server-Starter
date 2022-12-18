@@ -73,13 +73,26 @@
         .container .container__save {
             margin-top: 50px;
             width: 150px;
-            height: 150px;
+            height: 100px;
+            border-radius: 15px;
+            border: none;
+
+            background-color: #365466;
+            color: #ffffff;
 
             font-size: 60px;
             font-family: 'Yanone Kaffeesatz', sans-serif;
             font-weight: 500;
 
+            transition: 1s;
+
             align-self: center;
+        }
+
+        .container .container__save:hover {
+            background-color: #4cbdff;
+            box-shadow: 0px 0px 10px #4cbdff;
+            cursor: pointer;
         }
 
         .input-box {
