@@ -184,12 +184,90 @@
             border-color: #f30909;
             box-shadow: 0px 15px 15px -10px red; 
         }
+
+        .shakeInput {
+            animation: 1s shake;
+        }
+
+        @keyframes shake {
+            10%, 90% {
+                transform: translate3d(-2px, 0, 0);
+            }
+            
+            20%, 80% {
+                transform: translate3d(4px, 0, 0);
+            }
+
+            30%, 50%, 70% {
+                transform: translate3d(-8px, 0, 0);
+            }
+
+            40%, 60% {
+                transform: translate3d(8px, 0, 0);
+            }
+        }
     </style>
     <script>
         const authTokenInput = document.getElementById('authTokenInput');
         const apiKeyInput = document.getElementById('apiKeyInput')
+        const saveButton = document.querySelector('.container__save');
+    
 
+        const apiKeyInputAnimatin = {
+            run: false
+        }
+
+        saveButton.addEventListener('click', () => {
+            const authToken = authTokenInput.value;
+            const apiKey = apiKeyInput.value;
+
+            if (authToken.length > 0 && apiKey.length > 0) {
+                let result = {
+                    authToken: authToken,
+                    apiKey: apiKey
+                }
+
+                console.log(JSON.stringify(result))
+            } else {
+                if (authToken.length < 1) {
+                    if (authTokenInput.classList.contains('shakeInput')) {
+                        authTokenInput.classList.remove('shakeInput')
+                    }
+                    authTokenInput.classList.add('shakeInput')
+                }
+                if (apiKey.length < 1) {
+                    animationInput(apiKeyInput, apiKeyInputAnimatin)
+                }
+            }
+        });
         
+        addEventForInput(authTokenInput)
+        addEventForInput(apiKeyInput)
+
+        function addEventForInput(input) {
+            input.addEventListener('click',removeWarnClass)
+            input.addEventListener('focusout', removeWarnClass)
+        }
+
+        function removeWarnClass(event) {
+            if (event.target.classList.contains('warnInput') && event.target.value.length > 0) {
+                event.target.classList.remove('warnInput');
+            } else {
+                event.target.classList.add('warnInput');
+            }
+        }
+        
+        function animationInput(input, isRunAnimation) {
+            if (!isRunAnimation.run) {
+                input.classList.add('shakeInput')
+                isRunAnimation.run = true;
+                        
+                setTimeout(()=> {
+                    input.classList.remove('shakeInput')
+                    isRunAnimation.run = false;
+                },1000);
+            }
+        }
     </script>
 </body>
 </html>
