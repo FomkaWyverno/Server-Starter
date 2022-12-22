@@ -17,18 +17,6 @@ public class Main {
 //
 //        process.waitFor();
 
-        Socket socket = new Socket();
-
-        socket.connect(new InetSocketAddress("4.tcp.eu.ngrok.io",13152));
-
-        System.out.println("con");
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-        String line;
-
-        while ((line = reader.readLine()) != null) {
-            System.out.println(line);
-        }
+        System.out.println("Hello Pilotik");
     }
 }
