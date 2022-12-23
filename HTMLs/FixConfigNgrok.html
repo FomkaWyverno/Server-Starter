@@ -25,7 +25,10 @@
             </div>
             <a href="https://dashboard.ngrok.com/api" target="_blank">Get</a>
         </div>
-        <button class="container__save">Save</button>
+        <button class="container__save">
+            Save
+            <span></span>
+        </button>
     </div>
     
 
@@ -71,28 +74,63 @@
         }
 
         .container .container__save {
-            margin-top: 50px;
-            width: 150px;
-            height: 100px;
-            border-radius: 15px;
-            border: none;
+            position: relative;
 
-            background-color: #365466;
-            color: #ffffff;
+            margin-top: 50px;
+            border: 3px solid #ff5fa1;
+            background: transparent;
+            color: #ff5fa1;
 
             font-size: 60px;
             font-family: 'Yanone Kaffeesatz', sans-serif;
             font-weight: 500;
+            padding: 10px 40px 10px 40px;
 
-            transition: 1s;
+            overflow: hidden;
+
+            transition: .5s;
 
             align-self: center;
         }
 
+        .container .container__save span {
+            position: absolute;
+            content: '';
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            left: 0;
+            top: 0;
+            z-index: -2;
+        }
+
+        .container .container__save::before,
+        .container .container__save::after {
+            position: absolute;
+            content: '';
+            width: 100%;
+            height: 100%;
+            background: #ff5fa1;
+            top: 0;
+            left: -100%;
+            opacity: .5;
+            z-index: -1;
+            transition: .5s;
+        }
+
+        .container .container__save::after {
+            opacity: 1;
+            transition: .7s;
+        }
+
         .container .container__save:hover {
-            background-color: #4cbdff;
-            box-shadow: 0px 0px 10px #4cbdff;
             cursor: pointer;
+            color: #fff;
+        }
+
+        .container .container__save:hover::before,
+        .container .container__save:hover::after {
+            left: 0;
         }
 
         .input-box {
@@ -204,7 +242,6 @@
         const authTokenInput = document.getElementById('authTokenInput');
         const apiKeyInput = document.getElementById('apiKeyInput')
         const saveButton = document.querySelector('.container__save');
-    
 
         const apiKeyInputAnimatin = {
             run: false
@@ -226,10 +263,10 @@
 
                 console.log(JSON.stringify(result))
             } else {
-                if (authToken.length < 1) {
+                if (authToken.length < 1 || authTokenInput.classList.contains('warnInput')) {
                     animationInput(authTokenInput, authTokenInputAnimation)
                 }
-                if (apiKey.length < 1) {
+                if (apiKey.length < 1 || authTokenInput.classList.contains('warnInput')) {
                     animationInput(apiKeyInput, apiKeyInputAnimatin)
                 }
             }
@@ -238,16 +275,19 @@
         addEventForInput(authTokenInput)
         addEventForInput(apiKeyInput)
 
+        authTokenInput.value = "ergerg"
+
         function addEventForInput(input) {
-            input.addEventListener('click',removeWarnClass)
-            input.addEventListener('focusout', removeWarnClass)
+            input.addEventListener('input',removeWarnClass)
         }
 
         function removeWarnClass(event) {
-            if (event.target.classList.contains('warnInput') && event.target.value.length > 0) {
-                event.target.classList.remove('warnInput');
+            if (!event.target.classList.contains('warnInput')
+            &&
+            event.target.value.length == 0) {
+                event.target.classList.add('warnInput')
             } else {
-                event.target.classList.add('warnInput');
+                event.target.classList.remove('warnInput')
             }
         }
         
