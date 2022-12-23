@@ -116,8 +116,9 @@
             font-family: 'Yanone Kaffeesatz', sans-serif;
             font-weight: 300;
             color: #464646;
+            color: #ffffff;
 
-            border-bottom: solid 5px #111111;
+            border-bottom: solid 5px #0ef78a;
 
             transition: all 1s;
         }
@@ -151,10 +152,6 @@
             color: #464646;
         }
 
-        #authTokenInput:focus {
-            color: #ffffff;
-        }
-
         #authTokenInput:focus ~ label {
             bottom: 35px;
             left: 0px;
@@ -167,10 +164,6 @@
             left: 0px;
             font-weight: 400;
             color: #464646;
-        }
-
-        #apiKeyInput:focus {
-            color: #ffffff;
         }
 
         #apiKeyInput:focus ~ label {
@@ -217,6 +210,10 @@
             run: false
         }
 
+        const authTokenInputAnimation = {
+            run: false
+        }
+
         saveButton.addEventListener('click', () => {
             const authToken = authTokenInput.value;
             const apiKey = apiKeyInput.value;
@@ -230,10 +227,7 @@
                 console.log(JSON.stringify(result))
             } else {
                 if (authToken.length < 1) {
-                    if (authTokenInput.classList.contains('shakeInput')) {
-                        authTokenInput.classList.remove('shakeInput')
-                    }
-                    authTokenInput.classList.add('shakeInput')
+                    animationInput(authTokenInput, authTokenInputAnimation)
                 }
                 if (apiKey.length < 1) {
                     animationInput(apiKeyInput, apiKeyInputAnimatin)
