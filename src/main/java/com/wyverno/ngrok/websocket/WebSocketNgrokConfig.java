@@ -1,5 +1,6 @@
 package com.wyverno.ngrok.websocket;
 
+import com.wyverno.ngrok.NgrokTypeError;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -8,14 +9,13 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URI;
-import java.util.concurrent.TimeUnit;
 
 public class WebSocketNgrokConfig extends WebSocketServer {
 
     private volatile boolean isNeedStop = false;
+    private NgrokTypeError ngrokTypeError;
 
-    public WebSocketNgrokConfig(int port) {
+    public WebSocketNgrokConfig(int port, NgrokTypeError ngrokTypeError) {
         super(new InetSocketAddress(port));
         Thread closingWebSocketThread = new Thread(() -> {
             while (true) {
@@ -47,7 +47,7 @@ public class WebSocketNgrokConfig extends WebSocketServer {
 
     @Override
     public void onClose(WebSocket webSocket, int i, String s, boolean b) {
-
+        this.isNeedStop = true;
     }
 
     @Override
@@ -57,7 +57,8 @@ public class WebSocketNgrokConfig extends WebSocketServer {
 
     @Override
     public void onError(WebSocket webSocket, Exception e) {
-
+        e.printStackTrace();
+        this.isNeedStop = true;
     }
 
     @Override

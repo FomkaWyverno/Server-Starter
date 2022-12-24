@@ -77,8 +77,6 @@ public class Ngrok extends Thread {
     }
 
     private void fixConfig(NgrokTypeError ngrokTypeError) {
-        WebSocketNgrokConfig wsServerNgrokConfig = new WebSocketNgrokConfig(3535);
-
-        wsServerNgrokConfig.start();
+        WebSocketNgrokConfig wsServer = new WebSocketNgrokConfig(3535, ngrokTypeError);
     }
 }
