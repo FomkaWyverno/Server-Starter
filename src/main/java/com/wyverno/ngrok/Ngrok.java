@@ -1,9 +1,7 @@
 package com.wyverno.ngrok;
 
-import com.sun.net.httpserver.HttpServer;
+import com.wyverno.ngrok.websocket.WebSocketNgrokConfig;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,18 +70,15 @@ public class Ngrok extends Thread {
                 return;
             }
 
-            this.fixNgrok(ngrokTypeError);
+            this.fixConfig(ngrokTypeError);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void fixNgrok(NgrokTypeError ngrokTypeError) {
+    private void fixConfig(NgrokTypeError ngrokTypeError) {
+        WebSocketNgrokConfig wsServerNgrokConfig = new WebSocketNgrokConfig(3535);
 
-        switch (ngrokTypeError) {
-            case NotHasAuthToken: {
-
-            }
-        }
+        wsServerNgrokConfig.start();
     }
 }
