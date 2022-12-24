@@ -1,11 +1,14 @@
 package com.wyverno.ngrok;
 
+import com.wyverno.ngrok.config.ConfigForLaunch;
+import com.wyverno.ngrok.config.ConfigNotExistsException;
 import com.wyverno.ngrok.websocket.WebSocketNgrokConfig;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,11 +17,19 @@ public class Ngrok extends Thread {
     private final int port;
     private final String region;
 
+    private ConfigForLaunch configForLaunch;
+
     private ProcessBuilder processBuilder;
 
-    public Ngrok(int port) {
+    public Ngrok(int port, Path configForLaunch) throws IOException {
         this.port = port;
         region = null;
+
+        try {
+            this.configForLaunch = new ConfigForLaunch(configForLaunch);
+        } catch (ConfigNotExistsException e) {
+            ConfigForLaunch.createConfigFile(configForLaunch);
+        }
     }
 
     public Ngrok(int port, String region) {
