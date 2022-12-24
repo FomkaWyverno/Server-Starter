@@ -239,6 +239,11 @@
         }
     </style>
     <script>
+        const ws = new WebSocket('ws://localhost:3535')
+
+        ws.onopen = () => {
+            console.log('Connect')
+        }
         const authTokenInput = document.getElementById('authTokenInput');
         const apiKeyInput = document.getElementById('apiKeyInput')
         const saveButton = document.querySelector('.container__save');
@@ -271,11 +276,9 @@
                 }
             }
         });
-        
+
         addEventForInput(authTokenInput)
         addEventForInput(apiKeyInput)
-
-        authTokenInput.value = "ergerg"
 
         function addEventForInput(input) {
             input.addEventListener('input',removeWarnClass)

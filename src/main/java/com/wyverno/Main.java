@@ -1,9 +1,9 @@
 package com.wyverno;
 
-import com.wyverno.ngrok.Ngrok;
-import java.io.*;
+import com.wyverno.ngrok.websocket.WebSocketNgrokConfig;
+
+import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 
 public class Main {
 
@@ -17,6 +17,8 @@ public class Main {
 //
 //        process.waitFor();
 
-        System.out.println("Hello Pilotik");
+        WebSocketNgrokConfig webSocket = new WebSocketNgrokConfig(new InetSocketAddress(3535));
+
+        webSocket.run();
     }
 }
