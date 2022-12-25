@@ -1,6 +1,6 @@
 package com.wyverno.ngrok;
 
-import com.wyverno.ngrok.config.ConfigForLaunch;
+import com.wyverno.ngrok.config.ConfigHandler;
 import com.wyverno.ngrok.config.ConfigNotExistsException;
 import com.wyverno.ngrok.websocket.WebSocketNgrokConfig;
 
@@ -17,7 +17,7 @@ public class Ngrok extends Thread {
     private final int port;
     private final String region;
 
-    private ConfigForLaunch configForLaunch;
+    private ConfigHandler configHandler;
 
     private ProcessBuilder processBuilder;
 
@@ -26,9 +26,9 @@ public class Ngrok extends Thread {
         region = null;
 
         try {
-            this.configForLaunch = new ConfigForLaunch(configForLaunch);
+            this.configHandler = new ConfigHandler(configForLaunch);
         } catch (ConfigNotExistsException e) {
-            ConfigForLaunch.createConfigFile(configForLaunch);
+            ConfigHandler.createConfigFile(configForLaunch);
         }
     }
 

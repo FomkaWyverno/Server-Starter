@@ -8,6 +8,6 @@ public class Main {
 
 
     public static void main(String[] args) throws IOException {
-        Ngrok ngrok = new Ngrok(25565, Paths.get("config\\configForLaunch.yml"));
+        Ngrok ngrok = new Ngrok(25565, Paths.get("config\\test\\test4\\configForLaunch.yml"));
     }
 }
