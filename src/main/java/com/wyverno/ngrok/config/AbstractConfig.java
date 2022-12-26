@@ -18,4 +18,8 @@ public abstract class AbstractConfig {
         this.properties = new Properties();
         this.properties.load(new BufferedReader(new FileReader(configPath.toFile())));
     }
+
+    public String getProperty(String key) {
+        return this.properties.getProperty(key);
+    }
 }
