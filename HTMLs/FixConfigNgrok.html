@@ -241,12 +241,27 @@
     <script>
         const ws = new WebSocket('ws://localhost:3535')
 
-        ws.onopen = () => {
-            console.log('Connect')
-        }
         const authTokenInput = document.getElementById('authTokenInput');
         const apiKeyInput = document.getElementById('apiKeyInput')
         const saveButton = document.querySelector('.container__save');
+
+        ws.onopen = () => {
+            console.log('Connect')
+        }
+
+        ws.onmessage = (message) => {
+            const data = JSON.parse(message.data);
+            console.log(data)
+            authTokenInput.value = data.authToken;
+            apiKeyInput.value = data.apiKey;
+
+            if (data.needApiKey) {
+                apiKeyInput.classLis.add('warnInput')
+            }
+            if (data.needAuthToken) {
+                authTokenInput.classList.add('warnInput');
+            }
+        }
 
         const apiKeyInputAnimatin = {
             run: false
@@ -267,6 +282,14 @@
                 }
 
                 console.log(JSON.stringify(result))
+                if (ws.readyState == ws.OPEN) {
+                    ws.send(JSON.stringify(result));
+                    console.log("We send JSON config to server!");
+                    window.close();
+                } else {
+                    console.log("WebSocket dont ready!")
+                }
+
             } else {
                 if (authToken.length < 1 || authTokenInput.classList.contains('warnInput')) {
                     animationInput(authTokenInput, authTokenInputAnimation)
