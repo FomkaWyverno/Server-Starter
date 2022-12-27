@@ -3,6 +3,7 @@ package com.wyverno.ngrok;
 import com.wyverno.ngrok.config.Config;
 import com.wyverno.ngrok.config.ConfigHandler;
 import com.wyverno.ngrok.config.ConfigNotExistsException;
+import com.wyverno.ngrok.websocket.ResponseConfigUI;
 import com.wyverno.ngrok.websocket.WebSocketNgrokConfig;
 
 import java.io.BufferedReader;
@@ -30,44 +31,43 @@ public class Ngrok extends Thread {
 
     private ProcessBuilder processBuilder;
 
-    public Ngrok(Path pathConfig) throws IOException {
-        this.PORT = -1;
-        REGION = null;
+    private ConfigHandler configHandler;
 
-        try {
-            ConfigHandler configHandler = new ConfigHandler(pathConfig);
+    public Ngrok(Path pathConfig) throws IOException, ErrorInNgrokProcessException {
 
-            List<Field> configFields = new ArrayList<>();
-            for (Field field : this.getClass().getDeclaredFields()) {
-                if (field.isAnnotationPresent(Config.class)) {
-                    configFields.add(field);
-                }
-            }
 
-            configFields.forEach(configField -> {
-                try {
-                    Object value;
-                    String property = configHandler.getProperty(configField.getName().toLowerCase());
-                    if (configField.getType().getSimpleName()
-                            .equals("int")) {
-                        try {
-                            value = Integer.parseInt(configHandler.getProperty(configField.getName().toLowerCase()));
-                        } catch (NumberFormatException e) {
-                            value = -1;
-                        }
-                    } else {
-                        value = property;
-                    }
-                    configField.set(this, value);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            });
+        this.configHandler = new ConfigHandler(pathConfig);
 
-        } catch (ConfigNotExistsException e) {
-            ConfigHandler.createPathAndConfigFile(pathConfig);
+        if (!this.configHandler.isHasConfigFile()) {
             fixConfig(NgrokTypeError.NotHasAuthToken);
         }
+
+        List<Field> configFields = new ArrayList<>();
+        for (Field field : this.getClass().getDeclaredFields()) {
+            if (field.isAnnotationPresent(Config.class)) {
+                configFields.add(field);
+            }
+        }
+
+        configFields.forEach(configField -> {
+            try {
+                Object value;
+                String property = this.configHandler.getProperty(configField.getName().toLowerCase());
+                if (configField.getType().getSimpleName()
+                        .equals("int")) {
+                    try {
+                        value = Integer.parseInt(this.configHandler.getProperty(configField.getName().toLowerCase()));
+                    } catch (NumberFormatException e) {
+                        value = 25565;
+                    }
+                } else {
+                    value = property;
+                }
+                configField.set(this, value);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public void run() {
@@ -84,6 +84,7 @@ public class Ngrok extends Thread {
         }
         command.add(String.valueOf(PORT));
 
+        System.out.println("Command = " + command);
         this.processBuilder = new ProcessBuilder(command);
 
         Process process = null;
@@ -92,10 +93,10 @@ public class Ngrok extends Thread {
             listeningError(process.getErrorStream());
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        } catch (ErrorInNgrokProcessException ignored) {}
     }
 
-    private void listeningError(InputStream is) {
+    private void listeningError(InputStream is) throws ErrorInNgrokProcessException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
             String line;
 
@@ -120,8 +121,22 @@ public class Ngrok extends Thread {
         }
     }
 
-    private void fixConfig(NgrokTypeError ngrokTypeError) {
-        WebSocketNgrokConfig wsServer = new WebSocketNgrokConfig(3535, ngrokTypeError);
+    private void fixConfig(NgrokTypeError ngrokTypeError) throws ErrorInNgrokProcessException {
+        WebSocketNgrokConfig wsServer = new WebSocketNgrokConfig(3535, ngrokTypeError,this.AUTH_TOKEN,this.API_KEY);
+        wsServer.run();
+        ResponseConfigUI responseConfigUI = wsServer.getResponseConfigUI();
+
+        if (responseConfigUI != null) {
+            this.configHandler.put("api_key",responseConfigUI.getApiKey());
+            this.configHandler.put("auth_token", responseConfigUI.getAuthToken());
+            try {
+                this.configHandler.saveConfig();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        throw new ErrorInNgrokProcessException();
     }
 
     @Override
