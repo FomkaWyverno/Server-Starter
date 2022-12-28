@@ -21,11 +21,14 @@ public class WebSocketNgrokConfig extends WebSocketServer {
     private final String AUTH_TOKEN;
     private final String API_KEY;
 
-    public WebSocketNgrokConfig(int port, NgrokTypeError ngrokTypeError, String authToken, String apiKey) {
+    private final int NGROK_PORT;
+
+    public WebSocketNgrokConfig(int port, NgrokTypeError ngrokTypeError, String authToken, String apiKey, int ngrokPort) {
         super(new InetSocketAddress(port));
         this.ngrokTypeError = ngrokTypeError;
         this.AUTH_TOKEN = authToken;
         this.API_KEY = apiKey;
+        this.NGROK_PORT = ngrokPort;
         Thread closingWebSocketThread = new Thread(() -> {
             while (true) {
                 if (this.isNeedStop) {
@@ -55,6 +58,7 @@ public class WebSocketNgrokConfig extends WebSocketServer {
 
         boolean needAuthToken = false;
         boolean needApiKey = false;
+        boolean needPort = false;
 
         switch (this.ngrokTypeError) {
             case NotHasAuthToken: {
@@ -65,10 +69,14 @@ public class WebSocketNgrokConfig extends WebSocketServer {
                 needApiKey = true;
                 break;
             }
+            case NotCorrectPort: {
+                needPort = true;
+                break;
+            }
         }
 
         try {
-            webSocket.send(new ObjectMapper().writeValueAsString(new RequestConfigUI(needAuthToken,this.AUTH_TOKEN,needApiKey,this.API_KEY)));
+            webSocket.send(new ObjectMapper().writeValueAsString(new RequestConfigUI(needAuthToken,this.AUTH_TOKEN,needApiKey,this.API_KEY, needPort, this.NGROK_PORT)));
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }

@@ -2,11 +2,13 @@ package com.wyverno.ngrok.websocket;
 
 public class RequestConfigUI {
 
-    public RequestConfigUI(boolean needAuthToken, String authToken, boolean needApiKey, String apiKey) {
+    public RequestConfigUI(boolean needAuthToken, String authToken, boolean needApiKey, String apiKey, boolean needPort, int ngrokPort) {
         this.needAuthToken = needAuthToken;
         this.authToken = authToken;
         this.needApiKey = needApiKey;
         this.apiKey = apiKey;
+        this.needPort = needPort;
+        this.ngrokPort = ngrokPort;
     }
 
     private boolean needAuthToken;
@@ -14,6 +16,26 @@ public class RequestConfigUI {
 
     private boolean needApiKey;
     private String apiKey;
+
+    private boolean needPort;
+
+    private int ngrokPort;
+
+    public boolean isNeedPort() {
+        return needPort;
+    }
+
+    public void setNeedPort(boolean needPort) {
+        this.needPort = needPort;
+    }
+
+    public int getNgrokPort() {
+        return ngrokPort;
+    }
+
+    public void setNgrokPort(int ngrokPort) {
+        this.ngrokPort = ngrokPort;
+    }
 
     public boolean isNeedAuthToken() {
         return needAuthToken;

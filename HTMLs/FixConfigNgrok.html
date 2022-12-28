@@ -293,6 +293,7 @@
             console.log(data)
             authTokenInput.value = data.authToken;
             apiKeyInput.value = data.apiKey;
+            portInput.value = data.ngrokPort;
 
             if (data.needApiKey) {
                 apiKeyInput.classLis.add('warnInput')
@@ -310,16 +311,21 @@
             run: false
         }
 
+        const portInputAnimation = {
+            run: false
+        }
+
         saveButton.addEventListener('click', () => {
-            const authToken = authTokenInput.value;
-            const apiKey = apiKeyInput.value;
+            const result = {
+                authToken: authTokenInput.value,
+                apiKey: apiKeyInput.value,
+                ngrokPort: portInput.value
+            }
+            
 
-            if (authToken.length > 0 && apiKey.length > 0) {
-                let result = {
-                    authToken: authToken,
-                    apiKey: apiKey
-                }
+            const inputs = new Array(portInput, authTokenInput, apiKeyInput);
 
+            if (resultNotEmpty(result) && notWarningsInputs(inputs)) {
                 console.log(JSON.stringify(result))
                 if (ws.readyState == ws.OPEN) {
                     ws.send(JSON.stringify(result));
@@ -330,17 +336,47 @@
                 }
 
             } else {
-                if (authToken.length < 1 || authTokenInput.classList.contains('warnInput')) {
+                if (result.authToken.length < 1 || authTokenInput.classList.contains('warnInput')) {
                     animationInput(authTokenInput, authTokenInputAnimation)
                 }
-                if (apiKey.length < 1 || authTokenInput.classList.contains('warnInput')) {
+                if (result.apiKey.length < 1 || apiKeyInput.classList.contains('warnInput')) {
                     animationInput(apiKeyInput, apiKeyInputAnimatin)
                 }
+                if (result.ngrokPort.length < 1 || portInput.classList.contains('warnInput')) {
+                    animationInput(portInput, portInputAnimation)
+                }
+            }
+
+            function notWarningsInputs(inputs) {
+                console.log(inputs)
+                for (let i = 0; i < inputs.length; i++) {
+                    console.log(`Check warnINPUT`);
+                    console.log(inputs[i])
+                    if (inputs[i].classList.contains('warnInput')) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function resultNotEmpty(result) {
+                let resultReturn = true;
+
+                console.log(Object.entries(result))
+                Object.entries(result).forEach(element => {
+                    if (element.length <= 0) {
+                        resultReturn = false;
+                        return;
+                    }
+                });
+
+                return resultReturn;
             }
         });
 
         addEventForInput(authTokenInput)
         addEventForInput(apiKeyInput)
+        addEventForInput(portInput)
         portInput.addEventListener('input', event => {
             if (event.target.value.length > 0 && Number(event.target.value) <= 0) {
                 event.target.value = 1;
@@ -351,9 +387,6 @@
 
         function addEventForInput(input) {
             input.addEventListener('input', addOrRemoveWarnClass)
-            if (input.value.length == 0) {
-                input.classList.add('warnInput')
-            }
         }
 
         function addOrRemoveWarnClass(event) {

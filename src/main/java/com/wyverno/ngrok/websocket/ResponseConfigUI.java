@@ -4,6 +4,16 @@ public class ResponseConfigUI {
     private String authToken;
     private String apiKey;
 
+    private int ngrokPort;
+
+    public int getNgrokPort() {
+        return ngrokPort;
+    }
+
+    public void setNgrokPort(int ngrokPort) {
+        this.ngrokPort = ngrokPort;
+    }
+
     public String getAuthToken() {
         return authToken;
     }

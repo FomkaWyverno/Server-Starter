@@ -58,7 +58,7 @@ public class Ngrok extends Thread {
                     try {
                         value = Integer.parseInt(this.configHandler.getProperty(configField.getName().toLowerCase()));
                     } catch (NumberFormatException e) {
-                        value = 25565;
+                        value = -1;
                     }
                 } else {
                     value = property;
@@ -78,9 +78,17 @@ public class Ngrok extends Thread {
 
         command.add("ngrok");
         command.add("tcp");
-        if (this.REGION != null) {
+        if (!this.REGION.isEmpty()) {
             command.add("--region");
             command.add(this.REGION);
+        }
+
+        if (this.PORT <= 0 || this.PORT > 65535) {
+            try {
+                fixConfig(NgrokTypeError.NotCorrectPort );
+            } catch (ErrorInNgrokProcessException ignored) {
+                return;
+            }
         }
         command.add(String.valueOf(PORT));
 
@@ -122,13 +130,14 @@ public class Ngrok extends Thread {
     }
 
     private void fixConfig(NgrokTypeError ngrokTypeError) throws ErrorInNgrokProcessException {
-        WebSocketNgrokConfig wsServer = new WebSocketNgrokConfig(3535, ngrokTypeError,this.AUTH_TOKEN,this.API_KEY);
+        WebSocketNgrokConfig wsServer = new WebSocketNgrokConfig(3535, ngrokTypeError,this.AUTH_TOKEN,this.API_KEY,this.PORT);
         wsServer.run();
         ResponseConfigUI responseConfigUI = wsServer.getResponseConfigUI();
 
         if (responseConfigUI != null) {
             this.configHandler.put("api_key",responseConfigUI.getApiKey());
             this.configHandler.put("auth_token", responseConfigUI.getAuthToken());
+            this.configHandler.put("port", String.valueOf(responseConfigUI.getNgrokPort()));
             try {
                 this.configHandler.saveConfig();
             } catch (IOException e) {
