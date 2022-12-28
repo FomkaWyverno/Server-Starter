@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,8 +8,10 @@
     <title>Config Ngrok</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Yanone+Kaffeesatz:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Yanone+Kaffeesatz:wght@200;300;400;500;600&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
     <div class="container">
         <div class="container__element">
@@ -25,18 +28,24 @@
             </div>
             <a href="https://dashboard.ngrok.com/api" target="_blank">Get</a>
         </div>
+        <div class="container__element">
+            <div class="input-box" id="portBox">
+                <input type="number" id="portInput" name="portInput" required>
+                <label for="portInput">Port</label>
+            </div>
+        </div>
         <button class="container__save">
             Save
             <span></span>
         </button>
     </div>
-    
+
 
     <style>
         * {
             margin: 0;
         }
-        
+
         body {
             display: flex;
             width: 100%;
@@ -60,12 +69,16 @@
             width: 100%;
         }
 
+        .container .container__element:not(:first-child) {
+            margin-top: 45px;
+        }
+
         .container .container__element a {
 
             margin-left: 20px;
             height: 30px;
             width: 30px;
-            
+
             font-size: 30px;
             font-family: 'Yanone Kaffeesatz', sans-serif;
             font-weight: 500;
@@ -138,10 +151,6 @@
             width: 100%;
         }
 
-        #apiKeyBox {
-            margin-top: 45px;
-        }
-
         .input-box input {
             border: none;
             outline: none;
@@ -176,44 +185,67 @@
             font-size: 36px;
             font-weight: 200;
             color: #464646;
-            
+
             z-index: -1;
-           
+
             transition: 1s;
             transition-property: left, top, bottom, color;
         }
 
-        #authTokenInput:valid ~ label {
+        #authTokenInput:valid~label {
             bottom: 35px;
             left: 0px;
             font-weight: 400;
             color: #464646;
         }
 
-        #authTokenInput:focus ~ label {
+        #authTokenInput:focus~label {
             bottom: 35px;
             left: 0px;
             font-weight: 400;
             color: #ffffff;
         }
 
-        #apiKeyInput:valid ~ label {
+        #apiKeyInput:valid~label {
             bottom: 35px;
             left: 0px;
             font-weight: 400;
             color: #464646;
         }
 
-        #apiKeyInput:focus ~ label {
+        #apiKeyInput:focus~label {
             bottom: 35px;
             left: 0px;
             font-weight: 400;
             color: #ffffff;
+        }
+
+        #portInput:valid~label {
+            bottom: 35px;
+            left: 0;
+            font-weight: 400;
+            color: #464646;
+        }
+
+        #portInput:focus~label {
+            bottom: 35px;
+            left: 0px;
+            font-weight: 400;
+            color: #fff;
+        }
+
+        #portInput::-webkit-outer-spin-button,
+        #portInput::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+        }
+
+        #portInput[type=number] {
+            -moz-appearance: textfield;
         }
 
         .input-box .warnInput {
             border-color: #f30909;
-            box-shadow: 0px 15px 15px -10px red; 
+            box-shadow: 0px 15px 15px -10px red;
         }
 
         .shakeInput {
@@ -221,19 +253,25 @@
         }
 
         @keyframes shake {
-            10%, 90% {
+
+            10%,
+            90% {
                 transform: translate3d(-2px, 0, 0);
             }
-            
-            20%, 80% {
+
+            20%,
+            80% {
                 transform: translate3d(4px, 0, 0);
             }
 
-            30%, 50%, 70% {
+            30%,
+            50%,
+            70% {
                 transform: translate3d(-8px, 0, 0);
             }
 
-            40%, 60% {
+            40%,
+            60% {
                 transform: translate3d(8px, 0, 0);
             }
         }
@@ -243,6 +281,7 @@
 
         const authTokenInput = document.getElementById('authTokenInput');
         const apiKeyInput = document.getElementById('apiKeyInput')
+        const portInput = document.getElementById('portInput')
         const saveButton = document.querySelector('.container__save');
 
         ws.onopen = () => {
@@ -302,9 +341,16 @@
 
         addEventForInput(authTokenInput)
         addEventForInput(apiKeyInput)
+        portInput.addEventListener('input', event => {
+            if (event.target.value.length > 0 && Number(event.target.value) <= 0) {
+                event.target.value = 1;
+            } else if (Number(event.target.value) > 65535) {
+                event.target.value = 65535;
+            }
+        });
 
         function addEventForInput(input) {
-            input.addEventListener('input',addOrRemoveWarnClass)
+            input.addEventListener('input', addOrRemoveWarnClass)
             if (input.value.length == 0) {
                 input.classList.add('warnInput')
             }
@@ -312,25 +358,26 @@
 
         function addOrRemoveWarnClass(event) {
             if (!event.target.classList.contains('warnInput')
-            &&
-            event.target.value.length == 0) {
+                &&
+                event.target.value.length == 0) {
                 event.target.classList.add('warnInput')
             } else {
                 event.target.classList.remove('warnInput')
             }
         }
-        
+
         function animationInput(input, isRunAnimation) {
             if (!isRunAnimation.run) {
                 input.classList.add('shakeInput')
                 isRunAnimation.run = true;
-                        
-                setTimeout(()=> {
+
+                setTimeout(() => {
                     input.classList.remove('shakeInput')
                     isRunAnimation.run = false;
-                },1000);
+                }, 1000);
             }
         }
     </script>
 </body>
+
 </html>
