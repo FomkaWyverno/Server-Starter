@@ -1,8 +1,9 @@
 package com.wyverno.ngrok;
 
+import com.sun.org.apache.xalan.internal.xsltc.dom.SimpleResultTreeImpl;
 import com.wyverno.ngrok.config.Config;
 import com.wyverno.ngrok.config.ConfigHandler;
-import com.wyverno.ngrok.config.ConfigNotExistsException;
+import com.wyverno.ngrok.tunnel.Tunnel;
 import com.wyverno.ngrok.websocket.ResponseConfigUI;
 import com.wyverno.ngrok.websocket.WebSocketNgrokConfig;
 
@@ -13,6 +14,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Ngrok extends Thread {
@@ -30,9 +32,13 @@ public class Ngrok extends Thread {
     private String API_KEY;
 
     private ProcessBuilder processBuilder;
+    private Process processNgrok;
 
-    private ConfigHandler configHandler;
+    private Thread threadErrorApi;
+    private Thread threadErrorNgrok;
+    private final ConfigHandler configHandler;
 
+    private Tunnel tunnel;
     public Ngrok(Path pathConfig) throws IOException, ErrorInNgrokProcessException {
 
 
@@ -71,6 +77,50 @@ public class Ngrok extends Thread {
     }
 
     public void run() {
+        initConfigNgrok();
+        startNgrok();
+        try {
+            Thread.sleep(2000);
+            this.tunnel = getInformationAboutTunnel();
+            this.processNgrok.waitFor();
+        } catch (InterruptedException e) {
+            this.threadErrorNgrok.interrupt();
+            this.threadErrorApi.interrupt();
+            this.processNgrok.destroy();
+        }
+    }
+
+    private void initConfigNgrok() {
+        System.out.println("Initialize config");
+
+        List<String> commandAddAuthToken = new ArrayList<>();
+
+        commandAddAuthToken.add("ngrok");
+        commandAddAuthToken.add("config");
+        commandAddAuthToken.add("add-authtoken");
+        commandAddAuthToken.add(this.AUTH_TOKEN);
+
+        List<String> commandAddApiKey = new ArrayList<>();
+
+        commandAddApiKey.add("ngrok");
+        commandAddApiKey.add("config");
+        commandAddApiKey.add("add-api-key");
+        commandAddApiKey.add(this.API_KEY);
+
+        ProcessBuilder pbAuthToken = new ProcessBuilder(commandAddAuthToken);
+        ProcessBuilder pbApiKey = new ProcessBuilder(commandAddApiKey);
+
+        pbAuthToken.inheritIO();
+        pbApiKey.inheritIO();
+
+        try {
+            pbAuthToken.start().waitFor();
+            pbApiKey.start().waitFor();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    private void startNgrok() {
         if (this.processBuilder != null) {
             System.out.println("Ngrok is launched");
         }
@@ -85,7 +135,7 @@ public class Ngrok extends Thread {
 
         if (this.PORT <= 0 || this.PORT > 65535) {
             try {
-                fixConfig(NgrokTypeError.NotCorrectPort );
+                fixConfig(NgrokTypeError.NotCorrectPort);
             } catch (ErrorInNgrokProcessException ignored) {
                 return;
             }
@@ -95,16 +145,56 @@ public class Ngrok extends Thread {
         System.out.println("Command = " + command);
         this.processBuilder = new ProcessBuilder(command);
 
-        Process process = null;
+
         try {
-            process = this.processBuilder.start();
-            listeningError(process.getErrorStream());
+            this.processNgrok = this.processBuilder.start();
+            this.threadErrorNgrok = new Thread(() -> {
+                try {
+                    listeningError(this.processNgrok.getErrorStream(), command);
+                } catch (ErrorInNgrokProcessException ignored) {}
+            });
+            this.threadErrorNgrok.setDaemon(true);
+            this.threadErrorNgrok.start();
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (ErrorInNgrokProcessException ignored) {}
+        }
     }
 
-    private void listeningError(InputStream is) throws ErrorInNgrokProcessException {
+    private Tunnel getInformationAboutTunnel() {
+
+        List<String> commandApi = new ArrayList<>();
+        Collections.addAll(commandApi,"ngrok","api","tunnels","list");
+
+        ProcessBuilder pbAPI = new ProcessBuilder(commandApi);
+
+
+        try {
+            Process pAPI = pbAPI.start();
+            this.threadErrorApi = new Thread(() -> {
+                try {
+                    listeningError(pAPI.getErrorStream(), commandApi);
+                } catch (ErrorInNgrokProcessException ignored) {}
+            });
+            threadErrorApi.setDaemon(true);
+            threadErrorApi.start();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(pAPI.getInputStream()))) {
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    stringBuilder.append(line).append("\n");
+                }
+            }
+
+            System.out.println(stringBuilder);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private void listeningError(InputStream is, List<String> command) throws ErrorInNgrokProcessException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
             String line;
 
@@ -115,22 +205,22 @@ public class Ngrok extends Thread {
 
             NgrokTypeError ngrokTypeError = NgrokTypeError.getTypeError(errorMessage.toString());
 
+            System.err.println(command.toString());
             if (ngrokTypeError == null) {
                 System.err.println("Unknown error\n\n\n");
-
                 System.err.println(errorMessage);
-
                 return;
             }
 
+            System.err.println(errorMessage);
             this.fixConfig(ngrokTypeError);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void fixConfig(NgrokTypeError ngrokTypeError) throws ErrorInNgrokProcessException {
-        WebSocketNgrokConfig wsServer = new WebSocketNgrokConfig(3535, ngrokTypeError,this.AUTH_TOKEN,this.API_KEY,this.PORT);
+    private void fixConfig(NgrokTypeError... ngrokTypeErrors) throws ErrorInNgrokProcessException {
+        WebSocketNgrokConfig wsServer = new WebSocketNgrokConfig(3535,this.AUTH_TOKEN,this.API_KEY,this.PORT, ngrokTypeErrors);
         wsServer.run();
         ResponseConfigUI responseConfigUI = wsServer.getResponseConfigUI();
 
