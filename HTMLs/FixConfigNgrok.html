@@ -296,10 +296,13 @@
             portInput.value = data.ngrokPort;
 
             if (data.needApiKey) {
-                apiKeyInput.classLis.add('warnInput')
+                apiKeyInput.classList.add('warnInput')
             }
             if (data.needAuthToken) {
                 authTokenInput.classList.add('warnInput');
+            }
+            if (data.needPort) {
+                portInput.classList.add('warnInput');
             }
         }
 
