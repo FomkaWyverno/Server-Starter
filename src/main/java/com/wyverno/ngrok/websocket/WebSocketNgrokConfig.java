@@ -11,21 +11,22 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 
 public class WebSocketNgrokConfig extends WebSocketServer {
 
     private ResponseConfigUI responseConfigUI;
 
     private volatile boolean isNeedStop = false;
-    private NgrokTypeError ngrokTypeError;
+    private final NgrokTypeError[] ngrokTypeErrors;
     private final String AUTH_TOKEN;
     private final String API_KEY;
 
     private final int NGROK_PORT;
 
-    public WebSocketNgrokConfig(int port, NgrokTypeError ngrokTypeError, String authToken, String apiKey, int ngrokPort) {
+    public WebSocketNgrokConfig(int port, String authToken, String apiKey, int ngrokPort, NgrokTypeError... ngrokTypeErrors) {
         super(new InetSocketAddress(port));
-        this.ngrokTypeError = ngrokTypeError;
+        this.ngrokTypeErrors = ngrokTypeErrors;
         this.AUTH_TOKEN = authToken;
         this.API_KEY = apiKey;
         this.NGROK_PORT = ngrokPort;
@@ -60,20 +61,21 @@ public class WebSocketNgrokConfig extends WebSocketServer {
         boolean needApiKey = false;
         boolean needPort = false;
 
-        switch (this.ngrokTypeError) {
-            case NotHasAuthToken: {
-                needAuthToken = true;
-                break;
-            }
-            case NotHasApiKey: {
-                needApiKey = true;
-                break;
-            }
-            case NotCorrectPort: {
-                needPort = true;
-                break;
+        for (NgrokTypeError ngrokTypeError : this.ngrokTypeErrors) {
+            switch (ngrokTypeError) {
+                case NotHasAuthToken:
+                    needAuthToken = true;
+                    break;
+                case NotHasApiKey:
+                    needApiKey = true;
+                    break;
+                case NotCorrectPort:
+                    needPort = true;
+                    break;
             }
         }
+
+        System.out.println(Arrays.toString(this.ngrokTypeErrors));
 
         try {
             webSocket.send(new ObjectMapper().writeValueAsString(new RequestConfigUI(needAuthToken,this.AUTH_TOKEN,needApiKey,this.API_KEY, needPort, this.NGROK_PORT)));
