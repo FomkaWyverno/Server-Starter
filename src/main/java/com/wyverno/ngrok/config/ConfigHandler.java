@@ -55,14 +55,14 @@ public class ConfigHandler {
         }
         if (Files.notExists(path)) {
             if (isFile(path)) {
-                createConfigFile(path);
+                createConfigFile();
             } else {
                 Files.createDirectory(path);
             }
         }
     }
 
-    private void createConfigFile(Path path) throws IOException {
+    private void createConfigFile() throws IOException {
         this.properties = new Properties();
         for (Class<?> clazz : this.classesWithConfigFields) {
             for (Field configField : clazz.getDeclaredFields()) { // Create empty keys
