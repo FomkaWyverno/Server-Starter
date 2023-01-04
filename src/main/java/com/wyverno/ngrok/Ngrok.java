@@ -38,14 +38,16 @@ public class Ngrok extends Thread {
     private Thread threadErrorNgrok;
     private final ConfigHandler configHandler;
 
+    private volatile boolean isOtherProcessLaunched = false;
+
     private Tunnel tunnel;
-    public Ngrok(Path pathConfig) throws IOException, ErrorInNgrokProcessException {
+    public Ngrok(ConfigHandler configHandler) throws IOException, ErrorInNgrokProcessException {
 
 
-        this.configHandler = new ConfigHandler(pathConfig);
+        this.configHandler = configHandler;
 
         if (!this.configHandler.isHasConfigFile()) {
-            fixConfig(NgrokTypeError.NotHasAuthToken);
+            this.configHandler.fixConfig(this.AUTH_TOKEN,this.API_KEY,this.PORT,NgrokTypeError.NotHasAuthToken);
         }
 
         List<Field> configFields = new ArrayList<>();
@@ -62,7 +64,7 @@ public class Ngrok extends Thread {
                 if (configField.getType().getSimpleName()
                         .equals("int")) {
                     try {
-                        value = Integer.parseInt(this.configHandler.getProperty(configField.getName().toLowerCase()));
+                        value = Integer.parseInt(property);
                     } catch (NumberFormatException e) {
                         value = -1;
                     }
@@ -84,9 +86,7 @@ public class Ngrok extends Thread {
             this.tunnel = getInformationAboutTunnel();
             this.processNgrok.waitFor();
         } catch (InterruptedException e) {
-            this.threadErrorNgrok.interrupt();
-            this.threadErrorApi.interrupt();
-            this.processNgrok.destroy();
+            this.close();
         }
     }
 
@@ -95,17 +95,32 @@ public class Ngrok extends Thread {
 
         List<String> commandAddAuthToken = new ArrayList<>();
 
+        List<NgrokTypeError> errorList = new ArrayList<>();
+
         commandAddAuthToken.add("ngrok");
         commandAddAuthToken.add("config");
         commandAddAuthToken.add("add-authtoken");
-        commandAddAuthToken.add(this.AUTH_TOKEN);
+        if (this.AUTH_TOKEN != null) {
+            commandAddAuthToken.add(this.AUTH_TOKEN);
+        } else {
+            errorList.add(NgrokTypeError.NotHasAuthToken);
+        }
 
         List<String> commandAddApiKey = new ArrayList<>();
 
         commandAddApiKey.add("ngrok");
         commandAddApiKey.add("config");
         commandAddApiKey.add("add-api-key");
-        commandAddApiKey.add(this.API_KEY);
+        if (this.API_KEY != null) {
+            commandAddApiKey.add(this.API_KEY);
+        } else {
+            errorList.add(NgrokTypeError.NotHasApiKey);
+        }
+
+        if (!errorList.isEmpty()) {
+            this.configHandler.fixConfig(this.AUTH_TOKEN, this.API_KEY, this.PORT, errorList.toArray(new NgrokTypeError[0]));
+            return;
+        }
 
         ProcessBuilder pbAuthToken = new ProcessBuilder(commandAddAuthToken);
         ProcessBuilder pbApiKey = new ProcessBuilder(commandAddApiKey);
@@ -128,17 +143,20 @@ public class Ngrok extends Thread {
 
         command.add("ngrok");
         command.add("tcp");
-        if (!this.REGION.isEmpty()) {
+        if (this.REGION != null && !this.REGION.isEmpty()) {
             command.add("--region");
             command.add(this.REGION);
+        } else if (this.REGION == null) {
+            try {
+                this.configHandler.saveConfig(); // re-save config file
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         if (this.PORT <= 0 || this.PORT > 65535) {
-            try {
-                fixConfig(NgrokTypeError.NotCorrectPort);
-            } catch (ErrorInNgrokProcessException ignored) {
-                return;
-            }
+            this.configHandler.fixConfig(this.AUTH_TOKEN,this.API_KEY,this.PORT,NgrokTypeError.NotCorrectPort);
+            return;
         }
         command.add(String.valueOf(PORT));
 
@@ -151,7 +169,9 @@ public class Ngrok extends Thread {
             this.threadErrorNgrok = new Thread(() -> {
                 try {
                     listeningError(this.processNgrok.getErrorStream(), command);
-                } catch (ErrorInNgrokProcessException ignored) {}
+                } catch (ErrorInNgrokProcessException ignored) {} catch (ProccesNgrokIsLaunchedException e) {
+                    this.isOtherProcessLaunched = true;
+                }
             });
             this.threadErrorNgrok.setDaemon(true);
             this.threadErrorNgrok.start();
@@ -173,7 +193,9 @@ public class Ngrok extends Thread {
             this.threadErrorApi = new Thread(() -> {
                 try {
                     listeningError(pAPI.getErrorStream(), commandApi);
-                } catch (ErrorInNgrokProcessException ignored) {}
+                } catch (ErrorInNgrokProcessException ignored) {} catch (ProccesNgrokIsLaunchedException e) {
+                    this.isOtherProcessLaunched = true;
+                }
             });
             threadErrorApi.setDaemon(true);
             threadErrorApi.start();
@@ -194,7 +216,7 @@ public class Ngrok extends Thread {
         return null;
     }
 
-    private void listeningError(InputStream is, List<String> command) throws ErrorInNgrokProcessException {
+    private void listeningError(InputStream is, List<String> command) throws ErrorInNgrokProcessException, ProccesNgrokIsLaunchedException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
             String line;
 
@@ -203,6 +225,14 @@ public class Ngrok extends Thread {
                 errorMessage.append(line).append("\n");
             }
 
+            if (errorMessage.toString().equals("200 OK\n")) {
+                System.out.println(errorMessage); //skipped it not ERROR
+                return;
+            }
+
+            if (errorMessage.toString().contains("ERR_NGROK_108")) {
+                throw new ProccesNgrokIsLaunchedException();
+            }
             NgrokTypeError ngrokTypeError = NgrokTypeError.getTypeError(errorMessage.toString());
 
             System.err.println(command.toString());
@@ -213,29 +243,20 @@ public class Ngrok extends Thread {
             }
 
             System.err.println(errorMessage);
-            this.fixConfig(ngrokTypeError);
+            this.configHandler.fixConfig(this.AUTH_TOKEN,this.API_KEY,this.PORT,ngrokTypeError);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void fixConfig(NgrokTypeError... ngrokTypeErrors) throws ErrorInNgrokProcessException {
-        WebSocketNgrokConfig wsServer = new WebSocketNgrokConfig(3535,this.AUTH_TOKEN,this.API_KEY,this.PORT, ngrokTypeErrors);
-        wsServer.run();
-        ResponseConfigUI responseConfigUI = wsServer.getResponseConfigUI();
+    private void close() {
+        if (this.threadErrorNgrok != null) this.threadErrorNgrok.interrupt();
+        if (this.threadErrorApi != null ) this.threadErrorApi.interrupt();
+        this.processNgrok.destroy();
+    }
 
-        if (responseConfigUI != null) {
-            this.configHandler.put("api_key",responseConfigUI.getApiKey());
-            this.configHandler.put("auth_token", responseConfigUI.getAuthToken());
-            this.configHandler.put("port", String.valueOf(responseConfigUI.getNgrokPort()));
-            try {
-                this.configHandler.saveConfig();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        throw new ErrorInNgrokProcessException();
+    public boolean isOtherProcessLaunched() {
+        return isOtherProcessLaunched;
     }
 
     @Override
