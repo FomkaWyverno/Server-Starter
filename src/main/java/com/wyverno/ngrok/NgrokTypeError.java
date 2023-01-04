@@ -1,8 +1,8 @@
 package com.wyverno.ngrok;
 
 public enum NgrokTypeError {
-    NotHasAuthToken("Your authtoken is available on your dashboard"),
-    NotHasApiKey("The API authentication you specified does not look like a valid credential."),
+    NotHasAuthToken("ERR_NGROK_105"),
+    NotHasApiKey("ERR_NGROK_202"),
     NotCorrectPort("port");
 
     public final String errorMessage;
