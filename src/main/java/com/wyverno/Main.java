@@ -2,6 +2,7 @@ package com.wyverno;
 
 import com.wyverno.ngrok.ErrorInNgrokProcessException;
 import com.wyverno.ngrok.Ngrok;
+import com.wyverno.ngrok.config.ConfigHandler;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,10 +15,11 @@ public class Main {
     private volatile static String line = "";
     private volatile static Ngrok ngrok;
     public static void main(String[] args) throws IOException, InterruptedException {
+        ConfigHandler configHandler = new ConfigHandler(Paths.get("config\\config.properties"), Ngrok.class);
          Thread threadNgrok = new Thread(() -> {
              while (!line.equals("/stop")) {
                  try {
-                     ngrok = new Ngrok(Paths.get("config\\config.properties"));
+                     ngrok = new Ngrok(configHandler);
                      ngrok.start();
                      System.out.println(ngrok);
                      ngrok.join();
