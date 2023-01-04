@@ -41,9 +41,8 @@ public class Ngrok extends Thread {
     private volatile boolean isOtherProcessLaunched = false;
 
     private Tunnel tunnel;
-    public Ngrok(ConfigHandler configHandler) throws IOException, ErrorInNgrokProcessException {
-
-
+    public Ngrok(ConfigHandler configHandler) throws IOException {
+        super("Thread Ngrok");
         this.configHandler = configHandler;
 
         if (!this.configHandler.isHasConfigFile()) {
@@ -171,8 +170,9 @@ public class Ngrok extends Thread {
                     listeningError(this.processNgrok.getErrorStream(), command);
                 } catch (ErrorInNgrokProcessException ignored) {} catch (ProccesNgrokIsLaunchedException e) {
                     this.isOtherProcessLaunched = true;
+                    this.close();
                 }
-            });
+            },"Thread Error Ngrok");
             this.threadErrorNgrok.setDaemon(true);
             this.threadErrorNgrok.start();
         } catch (IOException e) {
@@ -195,8 +195,9 @@ public class Ngrok extends Thread {
                     listeningError(pAPI.getErrorStream(), commandApi);
                 } catch (ErrorInNgrokProcessException ignored) {} catch (ProccesNgrokIsLaunchedException e) {
                     this.isOtherProcessLaunched = true;
+                    this.close();
                 }
-            });
+            }, "Thread Error Api");
             threadErrorApi.setDaemon(true);
             threadErrorApi.start();
             StringBuilder stringBuilder = new StringBuilder();
@@ -231,6 +232,8 @@ public class Ngrok extends Thread {
             }
 
             if (errorMessage.toString().contains("ERR_NGROK_108")) {
+                System.err.println("NGROK PROCESS ALREADY LAUNCHED");
+                System.err.println(errorMessage);
                 throw new ProccesNgrokIsLaunchedException();
             }
             NgrokTypeError ngrokTypeError = NgrokTypeError.getTypeError(errorMessage.toString());
