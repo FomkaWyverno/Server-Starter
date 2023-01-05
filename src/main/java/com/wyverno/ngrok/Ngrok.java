@@ -14,7 +14,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 public class Ngrok extends Thread {
 
     @Config(comment = "Port to open for Network")
@@ -39,6 +38,7 @@ public class Ngrok extends Thread {
     private volatile boolean isOtherProcessLaunched = false;
 
     private Tunnel tunnel;
+    private final Object lockTunnel = new Object();
     public Ngrok(ConfigHandler configHandler) throws IOException {
         super("Thread Ngrok");
         this.configHandler = configHandler;
@@ -75,12 +75,17 @@ public class Ngrok extends Thread {
         });
     }
 
-    public void run() {
+    public synchronized void run() {
         initConfigNgrok();
         startNgrok();
         try {
             Thread.sleep(2000);
             this.tunnel = getInformationAboutTunnel();
+            System.out.println("Got Tunnel");
+            synchronized (lockTunnel) {
+                lockTunnel.notifyAll();
+            }
+            System.out.println("Join to Threads");
             if (this.threadErrorNgrok != null) this.threadErrorNgrok.join();
             if (this.threadErrorApi != null) this.threadErrorApi.join();
             if (this.processNgrok != null) this.processNgrok.waitFor();
@@ -214,7 +219,6 @@ public class Ngrok extends Thread {
             ObjectMapper mapper = new ObjectMapper();
 
             JsonNode jsonNode = mapper.readTree(stringBuilder.toString());
-            System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode.get("tunnels").get(0)));
             return mapper.readValue(jsonNode.get("tunnels").get(0).toString(), Tunnel.class);
         } catch (IOException e) {
             e.printStackTrace();
@@ -223,6 +227,18 @@ public class Ngrok extends Thread {
     }
 
     public Tunnel getTunnel() {
+        System.out.println("getTunnel()");
+
+        synchronized (lockTunnel) {
+            while (this.tunnel == null) {
+                try {
+                    System.out.println("wait");
+                    lockTunnel.wait();
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        }
         return this.tunnel;
     }
 
@@ -264,6 +280,9 @@ public class Ngrok extends Thread {
     private void close() {
         if (this.threadErrorNgrok != null) this.threadErrorNgrok.interrupt();
         if (this.threadErrorApi != null ) this.threadErrorApi.interrupt();
+        synchronized (lockTunnel) {
+            lockTunnel.notifyAll();
+        }
         this.processNgrok.destroy();
     }
 
