@@ -20,7 +20,7 @@ import java.util.Properties;
 
 public class ConfigHandler {
 
-    protected Properties properties;
+    protected volatile Properties properties;
     private final Path path;
     private final boolean isHasConfigFile;
 
@@ -127,8 +127,19 @@ public class ConfigHandler {
         return fileName.matches(".+\\..+");
     }
 
-    public synchronized void fixConfig(String authToken, String apiKey, int port, NgrokTypeError... ngrokTypeErrors) {
-        WebSocketNgrokConfig wsServer = new WebSocketNgrokConfig(3535,authToken, apiKey, port, ngrokTypeErrors);
+    public synchronized void fixConfig(NgrokTypeError... ngrokTypeErrors) {
+        int port;
+
+        try {
+            port = Integer.parseInt(this.properties.getProperty("port"));
+        } catch (NumberFormatException e) {
+            port = -1;
+        }
+        WebSocketNgrokConfig wsServer = new WebSocketNgrokConfig(3535,
+                this.properties.getProperty("auth_token"),
+                this.properties.getProperty("api_key"),
+                port,
+                ngrokTypeErrors);
         wsServer.run();
         ResponseConfigUI responseConfigUI = wsServer.getResponseConfigUI();
 
