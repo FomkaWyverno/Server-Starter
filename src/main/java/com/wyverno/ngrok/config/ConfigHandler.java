@@ -22,7 +22,7 @@ public class ConfigHandler {
 
     protected Properties properties;
     private final Path path;
-    private boolean isHasConfigFile;
+    private final boolean isHasConfigFile;
 
     private final Class<?>[] classesWithConfigFields;
 
