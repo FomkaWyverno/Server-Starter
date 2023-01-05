@@ -1,4 +1,4 @@
-package com.wyverno.ngrok.config;
+package com.wyverno.config;
 
 public class ConfigNotExistsException extends Exception {
 }

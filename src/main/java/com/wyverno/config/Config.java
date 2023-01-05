@@ -1,4 +1,4 @@
-package com.wyverno.ngrok.config;
+package com.wyverno.config;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

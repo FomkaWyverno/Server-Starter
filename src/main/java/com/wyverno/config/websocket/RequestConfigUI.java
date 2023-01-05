@@ -1,4 +1,4 @@
-package com.wyverno.ngrok.websocket;
+package com.wyverno.config.websocket;
 
 public class RequestConfigUI {
 

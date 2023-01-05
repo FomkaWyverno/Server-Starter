@@ -1,18 +1,14 @@
 package com.wyverno.ngrok;
 
-import com.sun.org.apache.xalan.internal.xsltc.dom.SimpleResultTreeImpl;
-import com.wyverno.ngrok.config.Config;
-import com.wyverno.ngrok.config.ConfigHandler;
+import com.wyverno.config.Config;
+import com.wyverno.config.ConfigHandler;
 import com.wyverno.ngrok.tunnel.Tunnel;
-import com.wyverno.ngrok.websocket.ResponseConfigUI;
-import com.wyverno.ngrok.websocket.WebSocketNgrokConfig;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.wyverno.ngrok.websocket;
+package com.wyverno.config.websocket;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 
-public class WebSocketNgrokConfig extends WebSocketServer {
+public class WebSocketConfig extends WebSocketServer {
 
     private ResponseConfigUI responseConfigUI;
 
@@ -24,7 +24,7 @@ public class WebSocketNgrokConfig extends WebSocketServer {
 
     private final int NGROK_PORT;
 
-    public WebSocketNgrokConfig(int port, String authToken, String apiKey, int ngrokPort, NgrokTypeError... ngrokTypeErrors) {
+    public WebSocketConfig(int port, String authToken, String apiKey, int ngrokPort, NgrokTypeError... ngrokTypeErrors) {
         super(new InetSocketAddress(port));
         this.ngrokTypeErrors = ngrokTypeErrors;
         this.AUTH_TOKEN = authToken;

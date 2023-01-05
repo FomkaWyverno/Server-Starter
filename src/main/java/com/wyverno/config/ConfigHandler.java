@@ -1,18 +1,14 @@
-package com.wyverno.ngrok.config;
+package com.wyverno.config;
 
 import com.sun.istack.internal.Nullable;
-import com.wyverno.ngrok.ErrorInNgrokProcessException;
-import com.wyverno.ngrok.Ngrok;
 import com.wyverno.ngrok.NgrokTypeError;
-import com.wyverno.ngrok.websocket.ResponseConfigUI;
-import com.wyverno.ngrok.websocket.WebSocketNgrokConfig;
+import com.wyverno.config.websocket.ResponseConfigUI;
+import com.wyverno.config.websocket.WebSocketConfig;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -135,7 +131,7 @@ public class ConfigHandler {
         } catch (NumberFormatException e) {
             port = -1;
         }
-        WebSocketNgrokConfig wsServer = new WebSocketNgrokConfig(3535,
+        WebSocketConfig wsServer = new WebSocketConfig(3535,
                 this.properties.getProperty("auth_token"),
                 this.properties.getProperty("api_key"),
                 port,

@@ -1,8 +1,7 @@
 package com.wyverno;
 
-import com.wyverno.ngrok.ErrorInNgrokProcessException;
 import com.wyverno.ngrok.Ngrok;
-import com.wyverno.ngrok.config.ConfigHandler;
+import com.wyverno.config.ConfigHandler;
 
 import java.io.BufferedReader;
 import java.io.IOException;
