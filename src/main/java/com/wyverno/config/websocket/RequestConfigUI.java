@@ -11,6 +11,10 @@ public class RequestConfigUI {
         this.ngrokPort = ngrokPort;
     }
 
+    public RequestConfigUI() {
+
+    }
+
     private boolean needAuthToken;
     private String authToken;
 
