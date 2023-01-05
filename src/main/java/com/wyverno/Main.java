@@ -38,12 +38,29 @@ public class Main {
              }
          });
          threadNgrok.start();
+
+         Thread threadIP = new Thread(() -> {
+             while (!line.equals("/stop")) {
+                 if (ngrok != null) {
+                     try {
+                         System.out.println(ngrok.getTunnel().getPublic_url());
+                     } catch (NullPointerException e) {
+                         System.out.println("Tunnel did not have time to create before the end of the program");
+                     }
+
+                     break;
+                 }
+             }
+         }, "Thread Check ip");
+
+         threadIP.start();
          try {
              while (!line.equals("/stop")) {
                  if (reader.ready()) {
                      line = reader.readLine();
                      if (line.equals("/stop")) {
                          ngrok.interrupt();
+                         threadIP.interrupt();
                          break;
                      }
                  }
