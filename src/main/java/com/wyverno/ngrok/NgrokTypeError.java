@@ -1,23 +1,30 @@
 package com.wyverno.ngrok;
 
 public enum NgrokTypeError {
-    NotHasAuthToken("ERR_NGROK_105"),
-    NotHasApiKey("ERR_NGROK_202"),
-    NotCorrectPort("port");
+    NotHasAuthToken("ERR_NGROK_105","ERR_NGROK_302"),
+    NotHasApiKey("API key is missing"),
+    NotCorrectPort();
 
-    public final String errorMessage;
+    public final String[] errorMessages;
 
-    NgrokTypeError(String errorMessage) {
-        this.errorMessage = errorMessage;
+    NgrokTypeError(String... errorMessages) {
+        this.errorMessages = errorMessages;
     }
 
-    public static NgrokTypeError getTypeError(String errorMessage) {
-        if (errorMessage.contains(NotHasAuthToken.errorMessage)) {
+    public static NgrokTypeError getTypeError(String message) {
+        if (NotHasAuthToken.containsAll(message)) {
             return NotHasAuthToken;
-        } else if (errorMessage.contains(NotHasApiKey.errorMessage)) {
+        } else if (NotHasApiKey.containsAll(message)) {
             return NotHasApiKey;
         } else {
             return null;
         }
+    }
+
+    private boolean containsAll(String message) {
+        for (String errorMessage : errorMessages) {
+            if (message.contains(errorMessage)) return true;
+        }
+        return false;
     }
 }
