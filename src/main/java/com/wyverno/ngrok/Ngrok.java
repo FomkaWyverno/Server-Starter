@@ -1,5 +1,7 @@
 package com.wyverno.ngrok;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wyverno.config.Config;
 import com.wyverno.config.ConfigHandler;
 import com.wyverno.ngrok.tunnel.Tunnel;
@@ -208,11 +210,20 @@ public class Ngrok extends Thread {
                 }
             }
 
-            System.out.println(stringBuilder);
+            //System.out.println(stringBuilder);
+            ObjectMapper mapper = new ObjectMapper();
+
+            JsonNode jsonNode = mapper.readTree(stringBuilder.toString());
+            System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode.get("tunnels").get(0)));
+            return mapper.readValue(jsonNode.get("tunnels").get(0).toString(), Tunnel.class);
         } catch (IOException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public Tunnel getTunnel() {
+        return this.tunnel;
     }
 
     private void listeningError(InputStream is, List<String> command) throws ErrorInNgrokProcessException, ProccesNgrokIsLaunchedException {
