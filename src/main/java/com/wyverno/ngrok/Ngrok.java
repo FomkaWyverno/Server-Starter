@@ -79,9 +79,9 @@ public class Ngrok extends Thread {
         try {
             Thread.sleep(2000);
             this.tunnel = getInformationAboutTunnel();
-            this.threadErrorNgrok.join();
-            this.threadErrorApi.join();
-            this.processNgrok.waitFor();
+            if (this.threadErrorNgrok != null) this.threadErrorNgrok.join();
+            if (this.threadErrorApi != null) this.threadErrorApi.join();
+            if (this.processNgrok != null) this.processNgrok.waitFor();
         } catch (InterruptedException e) {
             this.close();
         }
@@ -238,7 +238,7 @@ public class Ngrok extends Thread {
 
             System.err.println(command.toString());
             if (ngrokTypeError == null) {
-                System.err.println("Unknown error\n\n\n");
+                System.err.println("Unknown error\n---\n---\n");
                 System.err.println(errorMessage);
                 return;
             }
