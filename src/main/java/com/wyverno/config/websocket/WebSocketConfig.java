@@ -18,18 +18,11 @@ public class WebSocketConfig extends WebSocketServer {
     private ResponseConfigUI responseConfigUI;
 
     private volatile boolean isNeedStop = false;
-    private final NgrokTypeError[] ngrokTypeErrors;
-    private final String AUTH_TOKEN;
-    private final String API_KEY;
 
-    private final int NGROK_PORT;
-
-    public WebSocketConfig(int port, String authToken, String apiKey, int ngrokPort, NgrokTypeError... ngrokTypeErrors) {
+    private final RequestConfigUI requestConfigUI;
+    public WebSocketConfig(int port, RequestConfigUI requestConfigUI) {
         super(new InetSocketAddress(port));
-        this.ngrokTypeErrors = ngrokTypeErrors;
-        this.AUTH_TOKEN = authToken;
-        this.API_KEY = apiKey;
-        this.NGROK_PORT = ngrokPort;
+        this.requestConfigUI = requestConfigUI;
         Thread closingWebSocketThread = new Thread(() -> {
             while (true) {
                 if (this.isNeedStop) {
@@ -57,28 +50,11 @@ public class WebSocketConfig extends WebSocketServer {
     public void onOpen(WebSocket webSocket, ClientHandshake clientHandshake) {
         System.out.println("Connect client");
 
-        boolean needAuthToken = false;
-        boolean needApiKey = false;
-        boolean needPort = false;
-
-        for (NgrokTypeError ngrokTypeError : this.ngrokTypeErrors) {
-            switch (ngrokTypeError) {
-                case NotHasAuthToken:
-                    needAuthToken = true;
-                    break;
-                case NotHasApiKey:
-                    needApiKey = true;
-                    break;
-                case NotCorrectPort:
-                    needPort = true;
-                    break;
-            }
-        }
-
-        System.out.println(Arrays.toString(this.ngrokTypeErrors));
-
         try {
-            webSocket.send(new ObjectMapper().writeValueAsString(new RequestConfigUI(needAuthToken,this.AUTH_TOKEN,needApiKey,this.API_KEY, needPort, this.NGROK_PORT)));
+            String json = new ObjectMapper().writeValueAsString(this.requestConfigUI);
+            System.out.println("JSON REQUEST >>> "+json);
+
+            webSocket.send(json);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
