@@ -46,7 +46,7 @@ public class Ngrok extends Thread {
         this.configHandler = configHandler;
 
         if (!this.configHandler.isHasConfigFile()) {
-            this.configHandler.fixConfig(this.AUTH_TOKEN,this.API_KEY,this.PORT,NgrokTypeError.NotHasAuthToken);
+            this.configHandler.fixConfig(NgrokTypeError.NotHasAuthToken);
         }
 
         List<Field> configFields = new ArrayList<>();
@@ -83,6 +83,8 @@ public class Ngrok extends Thread {
         try {
             Thread.sleep(2000);
             this.tunnel = getInformationAboutTunnel();
+            this.threadErrorNgrok.join();
+            this.threadErrorApi.join();
             this.processNgrok.waitFor();
         } catch (InterruptedException e) {
             this.close();
@@ -117,7 +119,7 @@ public class Ngrok extends Thread {
         }
 
         if (!errorList.isEmpty()) {
-            this.configHandler.fixConfig(this.AUTH_TOKEN, this.API_KEY, this.PORT, errorList.toArray(new NgrokTypeError[0]));
+            this.configHandler.fixConfig(errorList.toArray(new NgrokTypeError[0]));
             return;
         }
 
@@ -154,7 +156,7 @@ public class Ngrok extends Thread {
         }
 
         if (this.PORT <= 0 || this.PORT > 65535) {
-            this.configHandler.fixConfig(this.AUTH_TOKEN,this.API_KEY,this.PORT,NgrokTypeError.NotCorrectPort);
+            this.configHandler.fixConfig(NgrokTypeError.NotCorrectPort);
             return;
         }
         command.add(String.valueOf(PORT));
@@ -246,7 +248,7 @@ public class Ngrok extends Thread {
             }
 
             System.err.println(errorMessage);
-            this.configHandler.fixConfig(this.AUTH_TOKEN,this.API_KEY,this.PORT,ngrokTypeError);
+            this.configHandler.fixConfig(ngrokTypeError);
         } catch (IOException e) {
             e.printStackTrace();
         }
