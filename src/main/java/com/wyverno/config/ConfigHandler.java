@@ -1,6 +1,11 @@
 package com.wyverno.config;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sun.istack.internal.Nullable;
+import com.wyverno.config.websocket.RequestConfigUI;
+import com.wyverno.config.websocket.RequestConfigUIBuilder;
 import com.wyverno.ngrok.NgrokTypeError;
 import com.wyverno.config.websocket.ResponseConfigUI;
 import com.wyverno.config.websocket.WebSocketConfig;
@@ -37,7 +42,7 @@ public class ConfigHandler {
     }
 
     public boolean isHasConfigFile() {
-        return isHasConfigFile;
+        return Files.exists(this.path);
     }
 
     @Nullable
@@ -127,15 +132,21 @@ public class ConfigHandler {
         int port;
 
         try {
-            port = Integer.parseInt(this.properties.getProperty("port"));
+            port = Integer.parseInt(properties.getProperty("port"));
         } catch (NumberFormatException e) {
             port = -1;
         }
-        WebSocketConfig wsServer = new WebSocketConfig(3535,
-                this.properties.getProperty("auth_token"),
-                this.properties.getProperty("api_key"),
-                port,
-                ngrokTypeErrors);
+
+        RequestConfigUI requestConfigUI = new RequestConfigUIBuilder()
+                .needAuthToken(containsNgrokError(NgrokTypeError.NotHasAuthToken,ngrokTypeErrors))
+                .needApiKey(containsNgrokError(NgrokTypeError.NotHasApiKey,ngrokTypeErrors))
+                .needPort(containsNgrokError(NgrokTypeError.NotCorrectPort,ngrokTypeErrors))
+                .authToken(properties.getProperty("auth_token"))
+                .apiKey(properties.getProperty("api_key"))
+                .ngrokPort(port)
+                .build();
+
+        WebSocketConfig wsServer = new WebSocketConfig(3535, requestConfigUI);
         wsServer.run();
         ResponseConfigUI responseConfigUI = wsServer.getResponseConfigUI();
 
@@ -149,5 +160,12 @@ public class ConfigHandler {
                 e.printStackTrace();
             }
         }
+    }
+
+    private boolean containsNgrokError(NgrokTypeError typeError, NgrokTypeError[] errors) {
+        for (NgrokTypeError error : errors) {
+            if (typeError.equals(error)) return true;
+        }
+        return false;
     }
 }
