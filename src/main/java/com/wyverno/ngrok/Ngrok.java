@@ -41,12 +41,14 @@ public class Ngrok extends Thread {
     private final Object lockTunnel = new Object();
 
     private volatile boolean isAlive = false;
+
+    private volatile boolean wasRequestFix = false;
     public Ngrok(ConfigHandler configHandler) throws IOException {
         super("Thread Ngrok");
         this.configHandler = configHandler;
 
         if (!this.configHandler.isHasConfigFile()) {
-            this.configHandler.fixConfig(NgrokTypeError.NotHasAuthToken);
+            this.fixSelfConfig(NgrokTypeError.NotHasAuthToken);
         }
 
         List<Field> configFields = new ArrayList<>();
@@ -139,7 +141,7 @@ public class Ngrok extends Thread {
         }
 
         if (!errorList.isEmpty()) {
-            this.configHandler.fixConfig(errorList.toArray(new NgrokTypeError[0]));
+            this.fixSelfConfig(errorList.toArray(new NgrokTypeError[0]));
             return;
         }
 
@@ -176,7 +178,7 @@ public class Ngrok extends Thread {
         }
 
         if (this.PORT <= 0 || this.PORT > 65535) {
-            this.configHandler.fixConfig(NgrokTypeError.NotCorrectPort);
+            this.fixSelfConfig(NgrokTypeError.NotCorrectPort);
             return;
         }
         command.add(String.valueOf(PORT));
@@ -296,21 +298,10 @@ public class Ngrok extends Thread {
             }
 
             System.err.println(errorMessage);
-            this.configHandler.fixConfig(ngrokTypeError);
+            this.fixSelfConfig(ngrokTypeError);
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private void close() {
-        if (this.threadErrorNgrok != null) this.threadErrorNgrok.interrupt();
-        if (this.threadErrorApi != null ) this.threadErrorApi.interrupt();
-        this.isAlive = false;
-        synchronized (lockTunnel) {
-            lockTunnel.notifyAll();
-        }
-        if (this.processNgrok != null) this.processNgrok.destroy();
-        System.out.println("Ngrok close");
     }
 
     public boolean isAliveNgrok() {
@@ -329,5 +320,26 @@ public class Ngrok extends Thread {
                 ", AUTH_TOKEN='" + AUTH_TOKEN + '\'' +
                 ", API_KEY='" + API_KEY + '\'' +
                 '}';
+    }
+
+    private synchronized void fixSelfConfig(NgrokTypeError... ngrokTypeErrors) {
+        if (!wasRequestFix) {
+            this.configHandler.fixConfig(ngrokTypeErrors);
+            System.out.println("Fix Self Config");
+            this.wasRequestFix = true;
+            this.close();
+        } else {
+            System.out.println("Fix is not need");
+        }
+    }
+    private void close() {
+        if (this.threadErrorNgrok != null) this.threadErrorNgrok.interrupt();
+        if (this.threadErrorApi != null ) this.threadErrorApi.interrupt();
+        this.isAlive = false;
+        synchronized (lockTunnel) {
+            lockTunnel.notifyAll();
+        }
+        if (this.processNgrok != null) this.processNgrok.destroy();
+        System.out.println("Ngrok close");
     }
 }
