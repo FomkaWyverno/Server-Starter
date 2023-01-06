@@ -41,14 +41,14 @@ public class Main {
 
          Thread threadIP = new Thread(() -> {
              while (!line.equals("/stop")) {
-                 if (ngrok != null) {
+                 if (ngrok != null && ngrok.isAliveNgrok()) {
+                     System.out.println("NGROK from which we are trying to take the tunnel " + ngrok.toString());
                      try {
                          System.out.println(ngrok.getTunnel().getPublic_url());
+                         break;
                      } catch (NullPointerException e) {
                          System.out.println("Tunnel did not have time to create before the end of the program");
                      }
-
-                     break;
                  }
              }
          }, "Thread Check ip");
