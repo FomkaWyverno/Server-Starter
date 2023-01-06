@@ -39,6 +39,8 @@ public class Ngrok extends Thread {
 
     private Tunnel tunnel;
     private final Object lockTunnel = new Object();
+
+    private volatile boolean isAlive = false;
     public Ngrok(ConfigHandler configHandler) throws IOException {
         super("Thread Ngrok");
         this.configHandler = configHandler;
@@ -75,7 +77,8 @@ public class Ngrok extends Thread {
         });
     }
 
-    public synchronized void run() {
+    public void run() {
+        this.isAlive = true;
         initConfigNgrok();
         startNgrok();
         try {
@@ -86,10 +89,24 @@ public class Ngrok extends Thread {
                 lockTunnel.notifyAll();
             }
             System.out.println("Join to Threads");
-            if (this.threadErrorNgrok != null) this.threadErrorNgrok.join();
-            if (this.threadErrorApi != null) this.threadErrorApi.join();
-            if (this.processNgrok != null) this.processNgrok.waitFor();
+            if (this.threadErrorNgrok != null) {
+                System.out.println("Join to threadErrorNgrok");
+                this.threadErrorNgrok.join();
+                System.out.println("Leave from threadErrorNgrok");
+            }
+            if (this.threadErrorApi != null) {
+                System.out.println("Join to threadErrorApi");
+                this.threadErrorApi.join();
+                System.out.println("Leave from threadErrorApi");
+            }
+            if (this.processNgrok != null) {
+                System.out.println("Join to processNgrok");
+                this.processNgrok.waitFor();
+                System.out.println("Leave from processNgrok");
+            }
         } catch (InterruptedException e) {
+            System.out.println("ngrok.run() interrupted");
+        } finally {
             this.close();
         }
     }
@@ -215,11 +232,13 @@ public class Ngrok extends Thread {
                 }
             }
 
-            //System.out.println(stringBuilder);
-            ObjectMapper mapper = new ObjectMapper();
+            if (!stringBuilder.toString().isEmpty()) {
+                ObjectMapper mapper = new ObjectMapper();
 
-            JsonNode jsonNode = mapper.readTree(stringBuilder.toString());
-            return mapper.readValue(jsonNode.get("tunnels").get(0).toString(), Tunnel.class);
+                JsonNode jsonNode = mapper.readTree(stringBuilder.toString());
+
+                return mapper.treeToValue(jsonNode.get("tunnels").get(0),Tunnel.class);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -234,7 +253,13 @@ public class Ngrok extends Thread {
                 try {
                     System.out.println("wait");
                     lockTunnel.wait();
+                    System.out.println("NOTIFY");
+                    if (!this.isAlive) {
+                        System.out.println("Break from cycle so ngrok no longer alive");
+                        break;
+                    }
                 } catch (InterruptedException e) {
+                    System.out.println("Break from cycle so interrupted");
                     break;
                 }
             }
@@ -280,10 +305,16 @@ public class Ngrok extends Thread {
     private void close() {
         if (this.threadErrorNgrok != null) this.threadErrorNgrok.interrupt();
         if (this.threadErrorApi != null ) this.threadErrorApi.interrupt();
+        this.isAlive = false;
         synchronized (lockTunnel) {
             lockTunnel.notifyAll();
         }
-        this.processNgrok.destroy();
+        if (this.processNgrok != null) this.processNgrok.destroy();
+        System.out.println("Ngrok close");
+    }
+
+    public boolean isAliveNgrok() {
+        return this.isAlive;
     }
 
     public boolean isOtherProcessLaunched() {
