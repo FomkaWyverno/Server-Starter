@@ -2,7 +2,7 @@ package com.wyverno.ngrok;
 
 public enum NgrokTypeError {
     NotHasAuthToken("ERR_NGROK_105","ERR_NGROK_302"),
-    NotHasApiKey("API key is missing"),
+    NotHasApiKey("API key is missing","HTTP 403: The API authentication you specified does not look like a valid credential"),
     NotCorrectPort();
 
     public final String[] errorMessages;
