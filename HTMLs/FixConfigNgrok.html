@@ -16,22 +16,35 @@
     <div class="container">
         <div class="container__element">
             <div class="input-box">
-                <input type="text" id="authTokenInput" name="authTokenInput" required>
-                <label for="authTokenInput">Auth Token</label>
+                <input class="input_variable" type="text" id="authTokenInput" name="authTokenInput" required>
+                <label for="authTokenInput">Ngrok Auth Token</label>
             </div>
             <a href="https://dashboard.ngrok.com/get-started/your-authtoken" target="_blank">Get</a>
         </div>
         <div class="container__element">
             <div class="input-box" id="apiKeyBox">
-                <input type="text" id="apiKeyInput" name="apiKeyInput" required>
-                <label for="apiKeyInput">Api-Key</label>
+                <input class="input_variable" type="text" id="apiKeyInput" name="apiKeyInput" required>
+                <label for="apiKeyInput">Ngrok Api-Key</label>
             </div>
             <a href="https://dashboard.ngrok.com/api" target="_blank">Get</a>
         </div>
         <div class="container__element">
             <div class="input-box" id="portBox">
-                <input type="number" id="portInput" name="portInput" required>
-                <label for="portInput">Port</label>
+                <input class="input_variable" type="number" id="portInput" name="portInput" required>
+                <label for="portInput">Server Port</label>
+            </div>
+        </div>
+        <div class="container__element">
+            <div class="input-box" id="bot-token">
+                <input class="input_variable" type="text" id="tokenInput" name="tokenInput" required>
+                <label for="tokenInput">Discord-Bot-Token</label>
+            </div>
+            <a href="https://discord.com/developers/applications" target="_blank">Get</a>
+        </div>
+        <div class="container__element">
+            <div class="input-box" id="textChannelIDBox">
+                <input class="input_variable" type="text" id="textChannelIDInput" name="textChannelIDInput" required>
+                <label for="textChannelIDInput">Text-Channel-ID</label>
             </div>
         </div>
         <button class="container__save">
@@ -192,50 +205,22 @@
             transition-property: left, top, bottom, color;
         }
 
-        #authTokenInput:valid~label {
+        .input_variable:valid~label {
             bottom: 35px;
             left: 0px;
             font-weight: 400;
             color: #464646;
         }
 
-        #authTokenInput:focus~label {
+        .input_variable:focus~label {
             bottom: 35px;
             left: 0px;
             font-weight: 400;
             color: #ffffff;
         }
 
-        #apiKeyInput:valid~label {
-            bottom: 35px;
-            left: 0px;
-            font-weight: 400;
-            color: #464646;
-        }
-
-        #apiKeyInput:focus~label {
-            bottom: 35px;
-            left: 0px;
-            font-weight: 400;
-            color: #ffffff;
-        }
-
-        #portInput:valid~label {
-            bottom: 35px;
-            left: 0;
-            font-weight: 400;
-            color: #464646;
-        }
-
-        #portInput:focus~label {
-            bottom: 35px;
-            left: 0px;
-            font-weight: 400;
-            color: #fff;
-        }
-
-        #portInput::-webkit-outer-spin-button,
-        #portInput::-webkit-inner-spin-button {
+        .input_variable::-webkit-outer-spin-button,
+        .input_variable::-webkit-inner-spin-button {
             -webkit-appearance: none;
         }
 
@@ -280,8 +265,10 @@
         const ws = new WebSocket('ws://localhost:3535')
 
         const authTokenInput = document.getElementById('authTokenInput');
-        const apiKeyInput = document.getElementById('apiKeyInput')
-        const portInput = document.getElementById('portInput')
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const portInput = document.getElementById('portInput');
+        const tokenInput = document.getElementById('tokenInput');
+        const channelIDInput = document.getElementById('textChannelIDInput');
         const saveButton = document.querySelector('.container__save');
 
         ws.onopen = () => {
@@ -294,6 +281,8 @@
             authTokenInput.value = data.authToken;
             apiKeyInput.value = data.apiKey;
             portInput.value = data.ngrokPort;
+            tokenInput.value = data.token;
+            channelIDInput.value = data.channelID;
 
             if (data.needApiKey) {
                 apiKeyInput.classList.add('warnInput')
@@ -303,6 +292,12 @@
             }
             if (data.needPort) {
                 portInput.classList.add('warnInput');
+            }
+            if (data.needToken) {
+                tokenInput.classList.add('warnInput');
+            }
+            if (data.needChannelID) {
+                channelIDInput.classList.add('warnInput');
             }
         }
 
@@ -318,15 +313,25 @@
             run: false
         }
 
+        const tokenInputAnimation = {
+            run: false
+        }
+
+        const channelIDInputAnimation = {
+            run: false
+        }
+
         saveButton.addEventListener('click', () => {
             const result = {
                 authToken: authTokenInput.value,
                 apiKey: apiKeyInput.value,
-                ngrokPort: portInput.value
+                ngrokPort: portInput.value,
+                token: tokenInput.value,
+                channelIDInput: channelIDInput.value
             }
             
 
-            const inputs = new Array(portInput, authTokenInput, apiKeyInput);
+            const inputs = new Array(portInput, authTokenInput, apiKeyInput, tokenInput, channelIDInput);
 
             if (resultNotEmpty(result) && notWarningsInputs(inputs)) {
                 console.log(JSON.stringify(result))
@@ -347,6 +352,12 @@
                 }
                 if (result.ngrokPort.length < 1 || portInput.classList.contains('warnInput')) {
                     animationInput(portInput, portInputAnimation)
+                }
+                if (result.token.length < 1 || tokenInput.classList.contains('warnInput')) {
+                    animationInput(tokenInput, tokenInputAnimation)
+                }
+                if (result.channelIDInput.length < 1 || channelIDInput.classList.contains('warnInput')) {
+                    animationInput(channelIDInput,channelIDInputAnimation)
                 }
             }
 
@@ -380,6 +391,8 @@
         addEventForInput(authTokenInput)
         addEventForInput(apiKeyInput)
         addEventForInput(portInput)
+        addEventForInput(channelIDInput)
+        addEventForInput(tokenInput)
         portInput.addEventListener('input', event => {
             if (event.target.value.length > 0 && Number(event.target.value) <= 0) {
                 event.target.value = 1;
