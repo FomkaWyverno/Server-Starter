@@ -2,17 +2,17 @@ package com.wyverno.config.websocket;
 
 public class RequestConfigUI {
 
-    public RequestConfigUI(boolean needAuthToken, String authToken, boolean needApiKey, String apiKey, boolean needPort, int ngrokPort) {
+    public RequestConfigUI(boolean needAuthToken, String authToken, boolean needApiKey, String apiKey, boolean needPort, int ngrokPort, boolean needToken, String token, boolean needChannelID, String channelID) {
         this.needAuthToken = needAuthToken;
         this.authToken = authToken;
         this.needApiKey = needApiKey;
         this.apiKey = apiKey;
         this.needPort = needPort;
         this.ngrokPort = ngrokPort;
-    }
-
-    public RequestConfigUI() {
-
+        this.needToken = needToken;
+        this.token = token;
+        this.needChannelID = needChannelID;
+        this.channelID = channelID;
     }
 
     private boolean needAuthToken;
@@ -24,6 +24,46 @@ public class RequestConfigUI {
     private boolean needPort;
 
     private int ngrokPort;
+
+    private boolean needToken;
+
+    private String token;
+
+    private boolean needChannelID;
+
+    private String channelID;
+
+    public boolean isNeedToken() {
+        return needToken;
+    }
+
+    public void setNeedToken(boolean needToken) {
+        this.needToken = needToken;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public boolean isNeedChannelID() {
+        return needChannelID;
+    }
+
+    public void setNeedChannelID(boolean needChannelID) {
+        this.needChannelID = needChannelID;
+    }
+
+    public String getChannelID() {
+        return channelID;
+    }
+
+    public void setChannelID(String channelID) {
+        this.channelID = channelID;
+    }
 
     public boolean isNeedPort() {
         return needPort;
