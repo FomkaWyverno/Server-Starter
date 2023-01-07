@@ -1,11 +1,9 @@
 package com.wyverno.config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sun.istack.internal.Nullable;
 import com.wyverno.config.websocket.RequestConfigUI;
 import com.wyverno.config.websocket.RequestConfigUIBuilder;
+import com.wyverno.discord.bot.DiscordBotError;
 import com.wyverno.ngrok.NgrokTypeError;
 import com.wyverno.config.websocket.ResponseConfigUI;
 import com.wyverno.config.websocket.WebSocketConfig;
@@ -23,7 +21,6 @@ public class ConfigHandler {
 
     protected volatile Properties properties;
     private final Path path;
-    private final boolean isHasConfigFile;
 
     private final Class<?>[] classesWithConfigFields;
 
@@ -33,10 +30,8 @@ public class ConfigHandler {
         this.properties = new Properties();
         this.classesWithConfigFields = classesWithConfigFields;
         if (Files.notExists(pathConfig)) {
-            this.isHasConfigFile = false;
             this.createPathAndConfigFile(this.path);
         } else {
-            this.isHasConfigFile = true;
             this.properties.load(new BufferedReader(new FileReader(pathConfig.toFile())));
         }
     }
@@ -128,7 +123,7 @@ public class ConfigHandler {
         return fileName.matches(".+\\..+");
     }
 
-    public synchronized void fixConfig(NgrokTypeError... ngrokTypeErrors) {
+    public synchronized void fixConfig(DiscordBotError[] discordBotErrors, NgrokTypeError... ngrokTypeErrors) {
         int port;
 
         try {
@@ -144,6 +139,11 @@ public class ConfigHandler {
                 .authToken(properties.getProperty("auth_token"))
                 .apiKey(properties.getProperty("api_key"))
                 .ngrokPort(port)
+
+                .needToken(containsDiscordError(DiscordBotError.InvalidToken, discordBotErrors))
+                .needChannelID(containsDiscordError(DiscordBotError.InvalidIDTextChat, discordBotErrors))
+                .token(this.properties.getProperty("token"))
+                .channelID(this.properties.getProperty("text_channel_id"))
                 .build();
 
         WebSocketConfig wsServer = new WebSocketConfig(3535, requestConfigUI);
@@ -167,5 +167,15 @@ public class ConfigHandler {
             if (typeError.equals(error)) return true;
         }
         return false;
+    }
+
+    private boolean containsDiscordError(DiscordBotError typeError, DiscordBotError[] errors) {
+        for (DiscordBotError error: errors) {
+            if (typeError.equals(error)) return true;
+        }
+        return false;
+    }
+    public void printProperties() {
+        System.out.println("Properties: " + this.properties.toString());
     }
 }
