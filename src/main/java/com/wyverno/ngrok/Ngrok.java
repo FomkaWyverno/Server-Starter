@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wyverno.config.Config;
 import com.wyverno.config.ConfigHandler;
+import com.wyverno.discord.bot.DiscordBotError;
 import com.wyverno.ngrok.tunnel.Tunnel;
 
 import java.io.BufferedReader;
@@ -324,7 +325,7 @@ public class Ngrok extends Thread {
 
     private synchronized void fixSelfConfig(NgrokTypeError... ngrokTypeErrors) {
         if (!wasRequestFix) {
-            this.configHandler.fixConfig(ngrokTypeErrors);
+            this.configHandler.fixConfig(new DiscordBotError[]{},ngrokTypeErrors);
             System.out.println("Fix Self Config");
             this.wasRequestFix = true;
             this.close();
