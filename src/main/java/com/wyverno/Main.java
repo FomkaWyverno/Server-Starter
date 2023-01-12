@@ -31,6 +31,7 @@ public class Main {
                      ngrok = new Ngrok(configHandler);
                      ngrok.start();
                      System.out.println(ngrok);
+                     Thread.sleep(200);
                      synchronized (lockNgrok) {
                          lockNgrok.notifyAll();
                      }
@@ -57,8 +58,25 @@ public class Main {
                  try {
                      String publicURL = aliveNgrok.getTunnel().getPublic_url();
                      System.out.println("PUBLIC URL >>> " + publicURL);
+
+                     publicURL = publicURL.replaceAll("tcp://","");
                      if (notify_Discord) {
-                         System.out.println("Notify Discord");
+                         DiscordBot discordBot = null;
+                         try {
+                             if (!line.equals("/stop")) {
+                                 do {
+                                     System.out.println("Notify Discord");
+                                     discordBot = new DiscordBot(configHandler,"Айпі-Адреса для входа на сервер: " + publicURL);
+                                     discordBot.start();
+                                     discordBot.join();
+                                 } while (!line.equals("/stop") && !discordBot.isMessageSent());
+                             }
+
+                         } catch (InterruptedException e) {
+                             discordBot.shutdown();
+                             e.printStackTrace();
+                             break;
+                         }
                      } else {
                          System.out.println("Not need notify discord");
                      }
