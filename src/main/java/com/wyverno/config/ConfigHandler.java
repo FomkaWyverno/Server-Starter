@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Properties;
 
 public class ConfigHandler {
@@ -33,6 +34,7 @@ public class ConfigHandler {
             this.createPathAndConfigFile(this.path);
         } else {
             this.properties.load(new BufferedReader(new FileReader(pathConfig.toFile())));
+            this.correctAllField();
         }
     }
 
@@ -57,6 +59,34 @@ public class ConfigHandler {
             } else {
                 Files.createDirectory(path);
             }
+        }
+    }
+
+    private void correctAllField() throws IOException {
+        boolean allHasField = true;
+        boolean hasUnnecessaryFields = false;
+
+        HashSet<String> configFields = new HashSet<>();
+        for (Class<?> clazz : this.classesWithConfigFields) {
+            for (Field field : clazz.getDeclaredFields()) {
+                if (field.isAnnotationPresent(Config.class)) {
+                    configFields.add(field.getName().toLowerCase());
+                    if (!this.properties.containsKey(field.getName().toLowerCase())) {
+                        this.properties.put(field.getName().toLowerCase(),"");
+                        allHasField = false;
+                    }
+                }
+            }
+        }
+
+        for (String property : this.properties.stringPropertyNames()) {
+            if (!configFields.contains(property)) {
+                this.properties.remove(property);
+                hasUnnecessaryFields = true;
+            }
+        }
+        if (!allHasField || hasUnnecessaryFields) {
+            this.saveConfig();
         }
     }
 
