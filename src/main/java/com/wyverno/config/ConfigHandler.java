@@ -184,6 +184,8 @@ public class ConfigHandler {
             this.put("api_key",responseConfigUI.getApiKey());
             this.put("auth_token", responseConfigUI.getAuthToken());
             this.put("port", String.valueOf(responseConfigUI.getNgrokPort()));
+            this.put("token", responseConfigUI.getToken());
+            this.put("text_channel_id", responseConfigUI.getChannelID());
             try {
                 this.saveConfig();
             } catch (IOException e) {
