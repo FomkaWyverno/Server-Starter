@@ -89,6 +89,7 @@ public class Ngrok extends Thread {
             this.tunnel = getInformationAboutTunnel();
             System.out.println("Got Tunnel");
             synchronized (lockTunnel) {
+                Thread.sleep(200);
                 lockTunnel.notifyAll();
             }
             System.out.println("Join to Threads");
