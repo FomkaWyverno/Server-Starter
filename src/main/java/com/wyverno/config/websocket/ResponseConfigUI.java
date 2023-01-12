@@ -6,6 +6,26 @@ public class ResponseConfigUI {
 
     private int ngrokPort;
 
+    private String token;
+
+    private String channelID;
+
+    public String getChannelID() {
+        return channelID;
+    }
+
+    public void setChannelID(String channelID) {
+        this.channelID = channelID;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
     public int getNgrokPort() {
         return ngrokPort;
     }
