@@ -43,7 +43,7 @@
         </div>
         <div class="container__element">
             <div class="input-box" id="textChannelIDBox">
-                <input class="input_variable" type="text" id="textChannelIDInput" name="textChannelIDInput" required>
+                <input class="input_variable" type="number" id="textChannelIDInput" name="textChannelIDInput" required>
                 <label for="textChannelIDInput">Text-Channel-ID</label>
             </div>
         </div>
@@ -327,7 +327,7 @@
                 apiKey: apiKeyInput.value,
                 ngrokPort: portInput.value,
                 token: tokenInput.value,
-                channelIDInput: channelIDInput.value
+                channelID: channelIDInput.value
             }
             
 
@@ -356,7 +356,7 @@
                 if (result.token.length < 1 || tokenInput.classList.contains('warnInput')) {
                     animationInput(tokenInput, tokenInputAnimation)
                 }
-                if (result.channelIDInput.length < 1 || channelIDInput.classList.contains('warnInput')) {
+                if (result.channelID.length < 1 || channelIDInput.classList.contains('warnInput')) {
                     animationInput(channelIDInput,channelIDInputAnimation)
                 }
             }
