@@ -13,6 +13,8 @@ public class Main {
 
     private volatile static String line = "";
     private volatile static Ngrok ngrok;
+    private static final Object lockNgrok = new Object();
+
     public static void main(String[] args) throws IOException {
         ConfigHandler configHandler = new ConfigHandler(Paths.get("config\\config.properties"), Ngrok.class);
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -22,6 +24,9 @@ public class Main {
                      ngrok = new Ngrok(configHandler);
                      ngrok.start();
                      System.out.println(ngrok);
+                     synchronized (lockNgrok) {
+                         lockNgrok.notifyAll();
+                     }
                      ngrok.join();
 
                      if (ngrok.isOtherProcessLaunched()) {
@@ -41,14 +46,14 @@ public class Main {
 
          Thread threadIP = new Thread(() -> {
              while (!line.equals("/stop")) {
-                 if (ngrok != null && ngrok.isAliveNgrok()) {
-                     System.out.println("NGROK from which we are trying to take the tunnel " + ngrok.toString());
-                     try {
-                         System.out.println(ngrok.getTunnel().getPublic_url());
-                         break;
-                     } catch (NullPointerException e) {
-                         System.out.println("Tunnel did not have time to create before the end of the program");
-                     }
+                 Ngrok aliveNgrok = getNgrok();
+                 try {
+                     String publicURL = aliveNgrok.getTunnel().getPublic_url();
+                     System.out.println("PUBLIC URL >>> " + publicURL);
+                     break;
+                 } catch (NullPointerException e) {
+                     System.out.println("Ngrok is null");
+                     break;
                  }
              }
          }, "Thread Check ip");
@@ -69,5 +74,21 @@ public class Main {
          } catch (IOException e) {
              System.out.println("Program is stop");
          }
+    }
+
+    private static Ngrok getNgrok() {
+        try {
+            synchronized (lockNgrok) {
+                while (ngrok == null || !ngrok.isAliveNgrok()) {
+                    System.out.println("Wait getNgrok()");
+                    lockNgrok.wait();
+                    System.out.println("Notify getNgrok()");
+                }
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("return Ngrok");
+        return ngrok;
     }
 }
